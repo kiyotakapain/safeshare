@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: safeshare
+    runtime: python
+    repo: https://github.com/kiyotakapain/safeshare
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.13.1
+      - key: FLASK_DEBUG
+        value: false

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeShare — Sign In</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f4f0;
+    color: #1a1a1a;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+  .card {
+    background: #fff;
+    border: 0.5px solid rgba(0,0,0,0.1);
+    border-radius: 16px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  }
+  .logo { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+  .logo span { color: #185FA5; }
+  .subtitle { color: #6b6b6b; font-size: 14px; margin-bottom: 28px; }
+  .form-group { margin-bottom: 16px; }
+  label { display: block; font-size: 13px; color: #6b6b6b; margin-bottom: 5px; font-weight: 500; }
+  input {
+    width: 100%; border: 1px solid rgba(0,0,0,0.15); border-radius: 8px;
+    padding: 11px 13px; font-size: 15px; font-family: inherit;
+    background: #fff; color: #1a1a1a; outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus { border-color: #185FA5; }
+  .btn {
+    width: 100%; padding: 12px; border: none; border-radius: 8px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: background 0.15s;
+    margin-top: 4px;
+  }
+  .btn-primary { background: #185FA5; color: #fff; }
+  .btn-primary:hover { background: #0C447C; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .switch { text-align: center; margin-top: 20px; font-size: 14px; color: #6b6b6b; }
+  .switch a { color: #185FA5; cursor: pointer; text-decoration: none; font-weight: 500; }
+  .error { color: #A32D2D; font-size: 13px; margin-top: 8px; background: #FCEBEB; padding: 8px 12px; border-radius: 6px; display: none; }
+  .tabs { display: flex; margin-bottom: 28px; border-bottom: 1px solid rgba(0,0,0,0.1); }
+  .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 500; color: #6b6b6b; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+  .tab.active { color: #185FA5; border-bottom-color: #185FA5; }
+  .form-section { display: none; }
+  .form-section.active { display: block; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Safe<span>Share</span></div>
+  <div class="subtitle">A community powered by respectful conversation</div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('login')">Sign In</div>
+    <div class="tab" onclick="showTab('register')">Register</div>
+  </div>
+
+  <!-- Login -->
+  <div class="form-section active" id="login-section">
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="l-username" placeholder="your_username" autocomplete="username" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="l-password" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')doLogin()" />
+    </div>
+    <div class="error" id="l-error"></div>
+    <button class="btn btn-primary" id="l-btn" onclick="doLogin()">Sign In</button>
+    <div class="switch">No account? <a onclick="showTab('register')">Register here</a></div>
+  </div>
+
+  <!-- Register -->
+  <div class="form-section" id="register-section">
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="r-username" placeholder="letters, numbers, underscores" autocomplete="username" />
+    </div>
+    <div class="form-group">
+      <label>Display Name</label>
+      <input type="text" id="r-display" placeholder="Your public name" />
+    </div>
+    <div class="form-group">
+      <label>Password <span style="font-weight:400;color:#aaa">(min 6 chars)</span></label>
+      <input type="password" id="r-password" placeholder="••••••••" autocomplete="new-password"
+             onkeydown="if(event.key==='Enter')doRegister()" />
+    </div>
+    <div class="error" id="r-error"></div>
+    <button class="btn btn-primary" id="r-btn" onclick="doRegister()">Create Account</button>
+    <div class="switch">Already have an account? <a onclick="showTab('login')">Sign in</a></div>
+  </div>
+</div>
+
+<script>
+function showTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (i===0 && tab==='login') || (i===1 && tab==='register')));
+  document.getElementById('login-section').classList.toggle('active', tab === 'login');
+  document.getElementById('register-section').classList.toggle('active', tab === 'register');
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideError(id) { document.getElementById(id).style.display = 'none'; }
+
+async function doLogin() {
+  hideError('l-error');
+  const username = document.getElementById('l-username').value.trim();
+  const password = document.getElementById('l-password').value;
+  if (!username || !password) { showError('l-error', 'Please fill in all fields.'); return; }
+  const btn = document.getElementById('l-btn');
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    const r = await fetch('/api/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username, password}) });
+    const d = await r.json();
+    if (!r.ok) { showError('l-error', d.error); return; }
+    window.location.href = '/feed';
+  } catch(e) { showError('l-error', 'Network error. Please try again.'); }
+  finally { btn.disabled = false; btn.textContent = 'Sign In'; }
+}
+
+async function doRegister() {
+  hideError('r-error');
+  const username     = document.getElementById('r-username').value.trim();
+  const display_name = document.getElementById('r-display').value.trim();
+  const password     = document.getElementById('r-password').value;
+  if (!username || !display_name || !password) { showError('r-error', 'All fields are required.'); return; }
+  const btn = document.getElementById('r-btn');
+  btn.disabled = true; btn.textContent = 'Creating…';
+  try {
+    const r = await fetch('/api/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username, display_name, password}) });
+    const d = await r.json();
+    if (!r.ok) { showError('r-error', d.error); return; }
+    window.location.href = '/feed';
+  } catch(e) { showError('r-error', 'Network error. Please try again.'); }
+  finally { btn.disabled = false; btn.textContent = 'Create Account'; }
+}
+</script>
+</body>
+</html>
