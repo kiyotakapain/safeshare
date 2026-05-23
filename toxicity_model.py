@@ -2,12 +2,27 @@ import os
 import pickle
 import re
 import numpy as np
-import tensorflow as tf
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.sequence import pad_sequences
+# Try to import TensorFlow/Keras; allow module to be imported even if TF is missing
+import importlib
 
-# Suppress TensorFlow warnings
-tf.get_logger().setLevel('ERROR')
+# Dynamically import TensorFlow/Keras to allow this module to import
+# even when TensorFlow isn't installed (prevents hard ImportError at import-time)
+try:
+    tf = importlib.import_module('tensorflow')
+    keras_models = importlib.import_module('tensorflow.keras.models')
+    load_model = getattr(keras_models, 'load_model')
+    seq_module = importlib.import_module('tensorflow.keras.preprocessing.sequence')
+    pad_sequences = getattr(seq_module, 'pad_sequences')
+
+    # Suppress TensorFlow warnings if possible
+    try:
+        tf.get_logger().setLevel('ERROR')
+    except Exception:
+        pass
+except Exception:
+    tf = None
+    load_model = None
+    pad_sequences = None
 
 class ToxicityDetector:
     def __init__(self, model_path='./saved_models/cnn_model.keras', 
