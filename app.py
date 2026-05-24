@@ -32,7 +32,18 @@ TOXIC_THRESHOLD = 0.552
 BAN_THRESHOLD = 10   
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
-toxicity_detector = get_detector()
+toxicity_detector = None
+
+
+def get_toxicity_detector():
+    global toxicity_detector
+    if toxicity_detector is None:
+        try:
+            toxicity_detector = get_detector()
+        except Exception as e:
+            print(f"[Warning] Failed to initialize toxicity detector: {e}")
+            toxicity_detector = None
+    return toxicity_detector
 
 
 def allowed_image_file(filename: str) -> bool:
@@ -127,16 +138,17 @@ def analyze_toxicity(text: str) -> dict:
     Use your trained CNN model to detect toxicity
     Returns {'toxic': bool, 'score': float, 'reason': str}
     """
-    has_keras_model = toxicity_detector is not None and getattr(toxicity_detector, 'model', None) is not None
-    has_sklearn_model = toxicity_detector is not None and getattr(toxicity_detector, 'sk_model', None) is not None
+    detector = get_toxicity_detector()
+    has_keras_model = detector is not None and getattr(detector, 'model', None) is not None
+    has_sklearn_model = detector is not None and getattr(detector, 'sk_model', None) is not None
 
-    if toxicity_detector is None or (not has_keras_model and not has_sklearn_model):
+    if detector is None or (not has_keras_model and not has_sklearn_model):
         # Fallback if model not loaded
         print("[Warning] Toxicity detector not available")
         return {'toxic': False, 'score': 0.0, 'reason': 'Model not loaded'}
     
     try:
-        result = toxicity_detector.predict(text)
+        result = detector.predict(text)
         return {
             'toxic': result['toxic'],
             'score': result['score'],
@@ -426,22 +438,17 @@ def api_clear_notifications():
 # Health check endpoint (for Render)
 @app.route('/health')
 def health_check():
+    detector = get_toxicity_detector()
     model_loaded = False
-    if toxicity_detector is not None:
-        model_loaded = getattr(toxicity_detector, 'model', None) is not None or getattr(toxicity_detector, 'sk_model', None) is not None
+    if detector is not None:
+        model_loaded = getattr(detector, 'model', None) is not None or getattr(detector, 'sk_model', None) is not None
     return jsonify({'status': 'healthy', 'model_loaded': model_loaded})
 
 
 # Bootstrap & run
 with app.app_context():
     db.create_all()
-    # Ensure detector is loaded
-    if toxicity_detector and (toxicity_detector.model or getattr(toxicity_detector, 'sk_model', None)):
-        print("✓ Toxicity detector ready with CNN model")
-        print(f"  - Threshold: {TOXIC_THRESHOLD}")
-        print(f"  - Ban threshold: {BAN_THRESHOLD} violations")
-    else:
-        print("⚠ Warning: Toxicity detector not loaded - check model files in 'saved_models/' directory")
+    print("✓ Database initialized")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
