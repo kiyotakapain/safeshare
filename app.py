@@ -1,4 +1,6 @@
 import os, json, re, uuid
+import unicodedata
+import difflib
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
@@ -51,6 +53,35 @@ def allowed_image_file(filename: str) -> bool:
         return False
     ext = filename.rsplit('.', 1)[1].lower()
     return ext in ALLOWED_IMAGE_EXTENSIONS
+
+
+def _normalize_username(u: str) -> str:
+    if not u:
+        return ''
+    # Normalize unicode, lowercase, keep only a-z0-9_ and collapse repeated chars
+    u = unicodedata.normalize('NFKC', u)
+    u = u.lower()
+    u = re.sub(r'[^a-z0-9_]', '', u)
+    # collapse sequential repeated characters (e.g. looool -> lol)
+    u = re.sub(r'(.)\1+', r'\1', u)
+    return u
+
+
+def _is_username_too_similar(new_username: str, threshold: float = 0.85) -> bool:
+    norm_new = _normalize_username(new_username)
+    if not norm_new:
+        return False
+    existing = [r[0] for r in User.query.with_entities(User.username).all()]
+    for ex in existing:
+        norm_ex = _normalize_username(ex)
+        if not norm_ex:
+            continue
+        if norm_ex == norm_new:
+            return True
+        score = difflib.SequenceMatcher(None, norm_ex, norm_new).ratio()
+        if score >= threshold:
+            return True
+    return False
 
 
 class User(db.Model):
@@ -199,6 +230,9 @@ def api_register():
         return jsonify({'error': 'Username can only contain letters, numbers, and underscores.'}), 400
     if len(password) < 6:
         return jsonify({'error': 'Password must be at least 6 characters.'}), 400
+    # Prevent creation of usernames that are visually or textually similar
+    if _is_username_too_similar(username):
+        return jsonify({'error': 'Username too similar to an existing account.'}), 400
     if User.query.filter_by(username=username).first():
         return jsonify({'error': 'Username already taken.'}), 400
 
