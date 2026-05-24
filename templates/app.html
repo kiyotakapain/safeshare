@@ -1,517 +1,1304 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SafeShare</title>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #f5f4f0;
-    --surface: #ffffff;
-    --border: rgba(0,0,0,0.1);
-    --text: #1a1a1a;
-    --muted: #6b6b6b;
-    --blue: #185FA5;
-    --blue-lt: #E6F1FB;
-    --red: #A32D2D;
-    --red-lt: #FCEBEB;
-    --green: #3B6D11;
-    --green-lt: #EAF3DE;
-    --amber: #854F0B;
-    --amber-lt: #FAEEDA;
-    --radius: 14px;
-    --radius-sm: 8px;
-  }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SafeShare</title>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  /* ── Nav ── */
-  nav { background: var(--surface); border-bottom: 0.5px solid var(--border); position: sticky; top: 0; z-index: 200; }
-  .nav-top { max-width: 680px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; height: 54px; gap: 12px; }
-  .nav-brand { font-size: 18px; font-weight: 700; flex: 1; }
-  .nav-brand span { color: var(--blue); }
-  .nav-meta { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
-  .badge { display: inline-flex; align-items: center; justify-content: center; background: var(--red); color: #fff; border-radius: 99px; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; padding: 0 5px; cursor: pointer; }
-  .nav-tabs { display: flex; border-top: 0.5px solid var(--border); max-width: 680px; margin: 0 auto; }
-  .nav-tab { flex: 1; padding: 10px 0; text-align: center; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }
-  .nav-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+    :root {
+      --bg: #f5f4f0;
+      --surface: #ffffff;
+      --border: rgba(0, 0, 0, 0.1);
+      --text: #1a1a1a;
+      --muted: #6b6b6b;
+      --blue: #185FA5;
+      --blue-lt: #E6F1FB;
+      --red: #A32D2D;
+      --red-lt: #FCEBEB;
+      --green: #3B6D11;
+      --green-lt: #EAF3DE;
+      --amber: #854F0B;
+      --amber-lt: #FAEEDA;
+      --radius: 14px;
+      --radius-sm: 8px;
+    }
 
-  /* ── Layout ── */
-  .container { max-width: 680px; margin: 0 auto; padding: 24px 16px; }
-  .section { display: none; }
-  .section.active { display: block; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.5;
+    }
 
-  /* ── Buttons ── */
-  .btn { cursor: pointer; border: none; border-radius: var(--radius-sm); font-size: 14px; font-family: inherit; font-weight: 500; transition: all 0.15s; padding: 9px 18px; }
-  .btn-primary { background: var(--blue); color: #fff; }
-  .btn-primary:hover { background: #0C447C; }
-  .btn-outline { background: transparent; border: 0.5px solid var(--border); color: var(--text); }
-  .btn-outline:hover { background: var(--bg); }
-  .btn-sm { padding: 6px 13px; font-size: 13px; }
-  .btn-danger { background: var(--red); color: #fff; }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: spin 0.65s linear infinite; vertical-align: -2px; margin-right: 5px; }
+    /* ── Nav ── */
+    nav {
+      background: var(--surface);
+      border-bottom: 0.5px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
 
-  /* ── Cards ── */
-  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
+    .nav-top {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      height: 54px;
+      gap: 12px;
+    }
 
-  /* ── Forms ── */
-  input, textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 14px; font-family: inherit; background: var(--surface); color: var(--text); outline: none; transition: border-color 0.15s; }
-  input:focus, textarea:focus { border-color: var(--blue); }
-  textarea { resize: vertical; min-height: 70px; }
+    .nav-brand {
+      font-size: 18px;
+      font-weight: 700;
+      flex: 1;
+    }
 
-  /* ── Composer ── */
-  .composer-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
-  .ctab { background: transparent; border: 0.5px solid var(--border); color: var(--muted); padding: 5px 14px; border-radius: 99px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
-  .ctab.active { background: var(--blue-lt); border-color: var(--blue); color: var(--blue); font-weight: 600; }
-  .composer-footer { display: flex; justify-content: flex-end; margin-top: 10px; }
-  #img-preview { width: 100%; border-radius: var(--radius-sm); margin-top: 8px; max-height: 320px; object-fit: cover; display: none; }
+    .nav-brand span {
+      color: var(--blue);
+    }
 
-  /* ── Post ── */
-  .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
-  .post-author { font-weight: 600; font-size: 14px; }
-  .post-time { font-size: 12px; color: var(--muted); }
-  .post-body { font-size: 15px; margin-bottom: 12px; white-space: pre-wrap; word-break: break-word; line-height: 1.6; }
-  .post-image { width: 100%; border-radius: var(--radius-sm); margin-bottom: 12px; max-height: 420px; object-fit: cover; display: block; }
-  .divider { border: none; border-top: 0.5px solid var(--border); margin: 12px 0; }
+    .nav-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
 
-  /* ── Comments ── */
-  .comment { display: flex; gap: 9px; padding: 9px 0; border-top: 0.5px solid var(--border); }
-  .comment-av { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; flex-shrink: 0; }
-  .comment-author { font-weight: 600; font-size: 13px; }
-  .comment-text { font-size: 14px; margin-top: 1px; word-break: break-word; }
-  .comment-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .comment-row { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
-  .comment-row input { flex: 1; }
-  .analyzing { font-size: 12px; color: var(--muted); margin-top: 5px; display: none; }
-  .toxic-warning { background: var(--red-lt); border: 0.5px solid #F09595; border-radius: var(--radius-sm); padding: 10px 14px; margin-top: 10px; font-size: 13px; color: var(--red); line-height: 1.5; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--red);
+      color: #fff;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 700;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      cursor: pointer;
+    }
 
-  /* ── Notifications ── */
-  .notif { display: flex; gap: 10px; align-items: flex-start; padding: 13px 16px; border-bottom: 0.5px solid var(--border); }
-  .notif:last-child { border-bottom: none; }
-  .notif-icon { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-  .notif-body { flex: 1; font-size: 14px; line-height: 1.5; }
-  .notif-time { font-size: 11px; color: var(--muted); margin-top: 3px; }
-  .notif.unread { background: #fafcff; }
+    .nav-tabs {
+      display: flex;
+      border-top: 0.5px solid var(--border);
+      max-width: 680px;
+      margin: 0 auto;
+    }
 
-  /* ── Banned banner ── */
-  .banned-banner { background: var(--red-lt); border: 1px solid #F09595; border-radius: var(--radius); padding: 18px 20px; text-align: center; margin-bottom: 20px; }
-  .banned-banner h3 { color: var(--red); font-size: 16px; margin-bottom: 6px; }
-  .banned-banner p { font-size: 14px; color: #791F1F; }
+    .nav-tab {
+      flex: 1;
+      padding: 10px 0;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      font-family: inherit;
+    }
 
-  /* ── Profile ── */
-  .profile-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
-  .profile-av { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; flex-shrink: 0; }
-  .profile-name { font-size: 19px; font-weight: 700; }
-  .profile-user { font-size: 13px; color: var(--muted); margin-top: 2px; }
-  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
-  .stat-box { background: var(--bg); border-radius: var(--radius-sm); padding: 14px; text-align: center; }
-  .stat-val { font-size: 24px; font-weight: 700; }
-  .stat-label { font-size: 12px; color: var(--muted); margin-top: 3px; }
-  .viol-bar-wrap { margin-top: 16px; padding: 14px; background: var(--bg); border-radius: var(--radius-sm); }
-  .viol-bar { height: 6px; background: rgba(0,0,0,0.1); border-radius: 3px; margin: 8px 0 5px; overflow: hidden; }
-  .viol-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
-  .tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 99px; margin-top: 5px; }
-  .tag-green { background: var(--green-lt); color: var(--green); }
-  .tag-red { background: var(--red-lt); color: var(--red); }
-  .tag-amber { background: var(--amber-lt); color: var(--amber); }
+    .nav-tab.active {
+      color: var(--blue);
+      border-bottom-color: var(--blue);
+    }
 
-  /* ── Guidelines ── */
-  .guideline { display: flex; gap: 10px; align-items: flex-start; padding: 11px 0; border-bottom: 0.5px solid var(--border); font-size: 14px; }
-  .guideline:last-child { border-bottom: none; }
-  .guideline-icon { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
 
-  /* ── Avatar palette ── */
-  .av-blue   { background: var(--blue-lt);  color: var(--blue);  }
-  .av-green  { background: var(--green-lt); color: var(--green); }
-  .av-amber  { background: var(--amber-lt); color: var(--amber); }
-  .av-red    { background: var(--red-lt);   color: var(--red);   }
-  .av-purple { background: #EEEDFE; color: #534AB7; }
-  .av-teal   { background: #E1F5EE; color: #0F6E56; }
+    .section {
+      display: none;
+    }
 
-  /* ── Empty state ── */
-  .empty { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 14px; }
-  .empty-icon { font-size: 36px; margin-bottom: 10px; }
+    .section.active {
+      display: block;
+    }
 
-  /* ── Section header ── */
-  .sec-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-  .sec-title { font-size: 17px; font-weight: 700; }
-</style>
+    .btn {
+      cursor: pointer;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-family: inherit;
+      font-weight: 500;
+      transition: all 0.15s;
+      padding: 9px 18px;
+    }
+
+    .btn-primary {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #0C447C;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 0.5px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-outline:hover {
+      background: var(--bg);
+    }
+
+    .btn-sm {
+      padding: 6px 13px;
+      font-size: 13px;
+    }
+
+    .btn-danger {
+      background: var(--red);
+      color: #fff;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 13px;
+      height: 13px;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      vertical-align: -2px;
+      margin-right: 5px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: var(--blue);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    .composer-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .ctab {
+      background: transparent;
+      border: 0.5px solid var(--border);
+      color: var(--muted);
+      padding: 5px 14px;
+      border-radius: 99px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .ctab.active {
+      background: var(--blue-lt);
+      border-color: var(--blue);
+      color: var(--blue);
+      font-weight: 600;
+    }
+
+    .composer-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 10px;
+    }
+
+    .composer-hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 8px 0 6px;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .file-picker-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .file-picker-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: #f0f4f8;
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .file-picker-btn:hover {
+      background: var(--blue-lt);
+      border-color: #b7d7f4;
+    }
+
+    .file-name {
+      font-size: 12px;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 320px;
+    }
+
+    #img-preview {
+      width: 100%;
+      border-radius: var(--radius-sm);
+      margin-top: 8px;
+      max-height: 320px;
+      object-fit: cover;
+      display: none;
+    }
+
+    .post-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .post-head-main {
+      flex: 1;
+    }
+
+    .post-head-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .post-del {
+      background: transparent;
+      border: none;
+      color: var(--red);
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .post-del:hover {
+      background: var(--red-lt);
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .post-author {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .post-time {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .post-body {
+      font-size: 15px;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.6;
+      background: #ececec;
+      border: 1px solid #dedede;
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .post-image {
+      width: 100%;
+      border-radius: var(--radius-sm);
+      margin-bottom: 12px;
+      max-height: 420px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .divider {
+      border: none;
+      border-top: 0.5px solid var(--border);
+      margin: 12px 0;
+    }
+
+    .comment {
+      display: flex;
+      gap: 9px;
+      padding: 10px;
+      border-top: 0.5px solid var(--border);
+      background: #f8f8f8;
+      border-radius: 10px;
+      margin-top: 8px;
+    }
+
+    .comment-av {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .comment-author {
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .comment-text {
+      font-size: 14px;
+      margin-top: 1px;
+      word-break: break-word;
+    }
+
+    .comment-time {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .comment-main {
+      flex: 1;
+      background: #ffffff;
+      border: 1px solid #ededed;
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+
+    .comment-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .comment-del {
+      background: transparent;
+      border: none;
+      color: var(--red);
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    .comment-del:hover {
+      background: var(--red-lt);
+    }
+
+    .comment-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      align-items: center;
+    }
+
+    .comment-row input {
+      flex: 1;
+    }
+
+    .analyzing {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 5px;
+      display: none;
+    }
+
+    .toxic-warning {
+      background: var(--red-lt);
+      border: 0.5px solid #F09595;
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--red);
+      line-height: 1.5;
+    }
+
+    .notif {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 13px 16px;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .notif:last-child {
+      border-bottom: none;
+    }
+
+    .notif-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .notif-body {
+      flex: 1;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .notif-time {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .notif.unread {
+      background: #fafcff;
+    }
+
+    .banned-banner {
+      background: var(--red-lt);
+      border: 1px solid #F09595;
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .banned-banner h3 {
+      color: var(--red);
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+
+    .banned-banner p {
+      font-size: 14px;
+      color: #791F1F;
+    }
+
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .profile-av {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .profile-name {
+      font-size: 19px;
+      font-weight: 700;
+    }
+
+    .profile-user {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .stat-box {
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .viol-bar-wrap {
+      margin-top: 16px;
+      padding: 14px;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+    }
+
+    .viol-bar {
+      height: 6px;
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 3px;
+      margin: 8px 0 5px;
+      overflow: hidden;
+    }
+
+    .viol-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 99px;
+      margin-top: 5px;
+    }
+
+    .tag-green {
+      background: var(--green-lt);
+      color: var(--green);
+    }
+
+    .tag-red {
+      background: var(--red-lt);
+      color: var(--red);
+    }
+
+    .tag-amber {
+      background: var(--amber-lt);
+      color: var(--amber);
+    }
+
+    .guideline {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 11px 0;
+      border-bottom: 0.5px solid var(--border);
+      font-size: 14px;
+    }
+
+    .guideline:last-child {
+      border-bottom: none;
+    }
+
+    .guideline-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .av-blue {
+      background: var(--blue-lt);
+      color: var(--blue);
+    }
+
+    .av-green {
+      background: var(--green-lt);
+      color: var(--green);
+    }
+
+    .av-amber {
+      background: var(--amber-lt);
+      color: var(--amber);
+    }
+
+    .av-red {
+      background: var(--red-lt);
+      color: var(--red);
+    }
+
+    .av-purple {
+      background: #EEEDFE;
+      color: #534AB7;
+    }
+
+    .av-teal {
+      background: #E1F5EE;
+      color: #0F6E56;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .empty-icon {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+
+    .sec-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .sec-title {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    /* Modal styles */
+    #delete-account-modal {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 800;
+    }
+
+    #delete-account-modal .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+    }
+
+    #delete-account-modal .modal-card {
+      position: relative;
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 20px;
+      width: 420px;
+      max-width: calc(100% - 32px);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+      z-index: 810;
+    }
+
+    #delete-account-modal .modal-card h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    #delete-account-modal .modal-card .muted {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 8px
+    }
+
+    #delete-account-modal input {
+      width: 100%;
+      margin-top: 6px;
+    }
+  </style>
 </head>
+
 <body>
 
-<nav>
-  <div class="nav-top">
-    <div class="nav-brand">Safe<span>Share</span></div>
-    <div class="nav-meta">
-      <span id="nav-name"></span>
-      <span id="nav-badge" class="badge" style="display:none" onclick="goTab('notifications')"></span>
-      <button class="btn btn-outline btn-sm" onclick="doLogout()">Logout</button>
+  <nav>
+    <div class="nav-top">
+      <div class="nav-brand">Safe<span>Share</span></div>
+      <div class="nav-meta">
+        <span id="nav-name"></span>
+        <span id="nav-badge" class="badge" style="display:none" onclick="goTab('notifications')"></span>
+        <button class="btn btn-outline btn-sm" onclick="doLogout()">Logout</button>
+      </div>
     </div>
-  </div>
-  <div class="nav-tabs">
-    <button class="nav-tab active" id="tab-feed"          onclick="goTab('feed')">🏠 Feed</button>
-    <button class="nav-tab"        id="tab-notifications" onclick="goTab('notifications')">🔔 Notifications</button>
-    <button class="nav-tab"        id="tab-profile"       onclick="goTab('profile')">👤 Profile</button>
-  </div>
-</nav>
-
-<!-- Feed -->
-<div class="section active container" id="sec-feed">
-  <div id="banned-banner" class="banned-banner" style="display:none">
-    <h3>🚫 Account Suspended</h3>
-    <p>Your account has been banned for repeatedly posting toxic comments (10+ violations). You can still read posts but cannot comment.</p>
-  </div>
-
-  <div class="card" id="composer">
-    <div class="composer-tabs">
-      <button class="ctab active" onclick="switchPostTab('text')" id="ctab-text">📝 Text</button>
-      <button class="ctab"        onclick="switchPostTab('image')" id="ctab-img">🖼 Image URL</button>
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tab-feed" onclick="goTab('feed')">🏠 Feed</button>
+      <button class="nav-tab" id="tab-notifications" onclick="goTab('notifications')">🔔 Notifications</button>
+      <button class="nav-tab" id="tab-profile" onclick="goTab('profile')">👤 Profile</button>
     </div>
-    <textarea id="post-text" placeholder="What's on your mind?"></textarea>
-    <div id="img-wrap" style="display:none;margin-top:8px">
-      <input type="url" id="post-img-url" placeholder="Paste an image URL…" oninput="previewImg()" />
-      <img id="img-preview" />
+  </nav>
+
+  <div class="section active container" id="sec-feed">
+    <div id="banned-banner" class="banned-banner" style="display:none">
+      <h3>🚫 Account Suspended</h3>
+      <p>Your account has been banned for repeatedly posting toxic comments (10+ violations). You can still read posts
+        but cannot comment.</p>
     </div>
-    <div class="composer-footer">
-      <button class="btn btn-primary" id="post-btn" onclick="submitPost()">Share Post</button>
+
+    <div class="card" id="composer">
+      <div class="composer-tabs">
+        <button class="ctab active" onclick="switchPostTab('text')" id="ctab-text">📝 Text</button>
+        <button class="ctab" onclick="switchPostTab('image')" id="ctab-img">🖼 Image</button>
+      </div>
+      <textarea id="post-text" placeholder="What's on your mind?"></textarea>
+      <div id="img-wrap" style="display:none;margin-top:8px">
+        <div class="file-picker-row">
+          <input class="file-input" type="file" id="post-img-file"
+            accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" onchange="previewImg()" />
+          <label class="file-picker-btn" for="post-img-file">Choose Photo</label>
+          <span class="file-name" id="post-img-file-name">No file chosen</span>
+        </div>
+        <div class="composer-hint">Add a short description above (optional).</div>
+        <div class="composer-hint">Or paste an image URL:</div>
+        <input type="url" id="post-img-url" placeholder="Paste an image URL…" oninput="previewImg()" />
+        <img id="img-preview" />
+      </div>
+      <div class="composer-footer">
+        <button class="btn btn-primary" id="post-btn" onclick="submitPost()">Share Post</button>
+      </div>
     </div>
+
+    <div id="feed-list"></div>
   </div>
 
-  <div id="feed-list"></div>
-</div>
-
-<!-- Notifications -->
-<div class="section container" id="sec-notifications">
-  <div class="sec-header">
-    <div class="sec-title">Notifications</div>
-    <button class="btn btn-outline btn-sm" onclick="clearNotifications()">Clear all</button>
+  <div class="section container" id="sec-notifications">
+    <div class="sec-header">
+      <div class="sec-title">Notifications</div>
+      <button class="btn btn-outline btn-sm" onclick="clearNotifications()">Clear all</button>
+    </div>
+    <div class="card" id="notif-list" style="padding:0;overflow:hidden"></div>
   </div>
-  <div class="card" id="notif-list" style="padding:0;overflow:hidden"></div>
-</div>
 
-<!-- Profile -->
-<div class="section container" id="sec-profile">
-  <div id="profile-content"></div>
-</div>
+  <div class="section container" id="sec-profile">
+    <div id="profile-content"></div>
+  </div>
 
-<script>
-// ─── State ───────────────────────────────────
-let ME = null;
-let postTab = 'text';
+  <script>
+    let ME = null;
+    let postTab = 'text';
+    let previewObjectUrl = null;
 
-// ─── Init ────────────────────────────────────
-(async () => {
-  const r = await fetch('/api/me');
-  if (!r.ok) { window.location.href = '/'; return; }
-  const d = await r.json();
-  ME = d.user;
-  document.getElementById('nav-name').textContent = ME.display_name;
-  updateBadge();
-  goTab('feed');
-})();
+    (async () => {
+      const r = await fetch('/api/me');
+      if (!r.ok) { window.location.href = '/'; return; }
+      const d = await r.json();
+      ME = d.user;
+      document.getElementById('nav-name').textContent = ME.display_name;
+      updateBadge();
+      goTab('feed');
+    })();
 
-// ─── Navigation ──────────────────────────────
-function goTab(tab) {
-  ['feed','notifications','profile'].forEach(t => {
-    document.getElementById('sec-'+t).classList.toggle('active', t===tab);
-    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
-  });
-  if (tab === 'feed')          loadFeed();
-  if (tab === 'notifications') loadNotifications();
-  if (tab === 'profile')       renderProfile();
-  if (tab === 'notifications') markRead();
-}
-
-function updateBadge() {
-  const b = document.getElementById('nav-badge');
-  const n = ME.unread_notifications || 0;
-  b.style.display = n > 0 ? 'inline-flex' : 'none';
-  b.textContent = n;
-}
-
-// ─── Auth ────────────────────────────────────
-async function doLogout() {
-  await fetch('/api/logout', { method: 'POST' });
-  window.location.href = '/';
-}
-
-// ─── Helpers ─────────────────────────────────
-const AV_COLORS = ['av-blue','av-green','av-amber','av-purple','av-teal','av-red'];
-function avColor(username) {
-  let h = 0; for (const c of username) h = (h*31 + c.charCodeAt(0)) % AV_COLORS.length;
-  return AV_COLORS[h];
-}
-function initials(name) {
-  return name.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2) || '?';
-}
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function timeAgo(iso) {
-  const d = Date.now() - new Date(iso).getTime();
-  if (d < 60000)   return 'just now';
-  if (d < 3600000) return Math.floor(d/60000) + 'm ago';
-  if (d < 86400000)return Math.floor(d/3600000) + 'h ago';
-  return Math.floor(d/86400000) + 'd ago';
-}
-function avatarHTML(name, username, size=40) {
-  const col = avColor(username);
-  const fs  = Math.round(size * 0.35);
-  return `<div class="avatar ${col}" style="width:${size}px;height:${size}px;font-size:${fs}px">${esc(initials(name))}</div>`;
-}
-
-// ─── Post composer ────────────────────────────
-function switchPostTab(t) {
-  postTab = t;
-  document.getElementById('post-text').style.display = t==='text' ? 'block' : 'none';
-  document.getElementById('img-wrap').style.display   = t==='image' ? 'block' : 'none';
-  document.getElementById('ctab-text').classList.toggle('active', t==='text');
-  document.getElementById('ctab-img').classList.toggle('active', t==='image');
-}
-
-function previewImg() {
-  const url = document.getElementById('post-img-url').value.trim();
-  const img = document.getElementById('img-preview');
-  if (url) { img.src = url; img.style.display = 'block'; }
-  else     { img.style.display = 'none'; }
-}
-
-async function submitPost() {
-  const text     = document.getElementById('post-text').value.trim();
-  const imageUrl = document.getElementById('post-img-url').value.trim();
-  const content  = postTab === 'text' ? text : text;
-
-  if (!content && !imageUrl) return;
-
-  const btn = document.getElementById('post-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Posting…';
-
-  try {
-    const r = await fetch('/api/posts', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ content, image_url: imageUrl })
-    });
-    const d = await r.json();
-    if (!r.ok) { alert(d.error); return; }
-    document.getElementById('post-text').value = '';
-    document.getElementById('post-img-url').value = '';
-    document.getElementById('img-preview').style.display = 'none';
-    loadFeed();
-  } catch(e) { alert('Error posting.'); }
-  finally { btn.disabled = false; btn.textContent = 'Share Post'; }
-}
-
-// ─── Feed ─────────────────────────────────────
-async function loadFeed() {
-  if (ME.is_banned) {
-    document.getElementById('banned-banner').style.display = 'block';
-    document.getElementById('composer').style.display = 'none';
-  }
-
-  try {
-    const r = await fetch('/api/posts');
-    const d = await r.json();
-    if (!r.ok) return;
-    const list = document.getElementById('feed-list');
-    if (!d.posts.length) {
-      list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>No posts yet. Be the first to share!</div>';
-      return;
+    function goTab(tab) {
+      ['feed', 'notifications', 'profile'].forEach(t => {
+        document.getElementById('sec-' + t).classList.toggle('active', t === tab);
+        document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+      });
+      if (tab === 'feed') loadFeed();
+      if (tab === 'notifications') loadNotifications();
+      if (tab === 'profile') renderProfile();
+      if (tab === 'notifications') markRead();
     }
-    list.innerHTML = d.posts.map(renderPost).join('');
-  } catch(e) {}
-}
 
-function renderPost(p) {
-  const comments = (p.comments||[]).map(c => renderComment(c)).join('');
-  const canComment = !ME.is_banned;
-  const commentInput = canComment
-    ? `<div class="comment-row">
+    function updateBadge() {
+      const b = document.getElementById('nav-badge');
+      const n = ME.unread_notifications || 0;
+      b.style.display = n > 0 ? 'inline-flex' : 'none';
+      b.textContent = n;
+    }
+
+    async function doLogout() {
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.href = '/';
+    }
+
+    const AV_COLORS = ['av-blue', 'av-green', 'av-amber', 'av-purple', 'av-teal', 'av-red'];
+    function avColor(username) {
+      let h = 0; for (const c of username) h = (h * 31 + c.charCodeAt(0)) % AV_COLORS.length;
+      return AV_COLORS[h];
+    }
+    function initials(name) {
+      return name.split(' ').map(w => w[0] || '').join('').toUpperCase().slice(0, 2) || '?';
+    }
+    function esc(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function timeAgo(iso) {
+      const d = Date.now() - new Date(iso).getTime();
+      if (d < 60000) return 'just now';
+      if (d < 3600000) return Math.floor(d / 60000) + 'm ago';
+      if (d < 86400000) return Math.floor(d / 3600000) + 'h ago';
+      return Math.floor(d / 86400000) + 'd ago';
+    }
+    function avatarHTML(name, username, size = 40) {
+      const col = avColor(username);
+      const fs = Math.round(size * 0.35);
+      return `<div class="avatar ${col}" style="width:${size}px;height:${size}px;font-size:${fs}px">${esc(initials(name))}</div>`;
+    }
+
+    function switchPostTab(t) {
+      postTab = t;
+      const textBox = document.getElementById('post-text');
+      document.getElementById('img-wrap').style.display = t === 'image' ? 'block' : 'none';
+      document.getElementById('ctab-text').classList.toggle('active', t === 'text');
+      document.getElementById('ctab-img').classList.toggle('active', t === 'image');
+      textBox.placeholder = t === 'image' ? 'Add a description for your photo (optional)' : "What's on your mind?";
+      textBox.style.display = 'block';
+    }
+
+    function previewImg() {
+      const fileInput = document.getElementById('post-img-file');
+      const fileName = document.getElementById('post-img-file-name');
+      const url = document.getElementById('post-img-url').value.trim();
+      const img = document.getElementById('img-preview');
+
+      if (previewObjectUrl) {
+        URL.revokeObjectURL(previewObjectUrl);
+        previewObjectUrl = null;
+      }
+
+      const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+      if (file) {
+        fileName.textContent = file.name;
+        previewObjectUrl = URL.createObjectURL(file);
+        img.src = previewObjectUrl;
+        img.style.display = 'block';
+        return;
+      }
+
+      fileName.textContent = 'No file chosen';
+
+      if (url) {
+        img.src = url;
+        img.style.display = 'block';
+        return;
+      }
+
+      img.src = '';
+      img.style.display = 'none';
+    }
+
+    function clearImageInputs() {
+      const fileInput = document.getElementById('post-img-file');
+      const fileName = document.getElementById('post-img-file-name');
+      const urlInput = document.getElementById('post-img-url');
+      const img = document.getElementById('img-preview');
+
+      fileInput.value = '';
+      fileName.textContent = 'No file chosen';
+      urlInput.value = '';
+      img.src = '';
+      img.style.display = 'none';
+
+      if (previewObjectUrl) {
+        URL.revokeObjectURL(previewObjectUrl);
+        previewObjectUrl = null;
+      }
+    }
+
+    async function submitPost() {
+      const text = document.getElementById('post-text').value.trim();
+      const fileInput = document.getElementById('post-img-file');
+      const imageUrl = postTab === 'image' ? document.getElementById('post-img-url').value.trim() : '';
+      const imageFile = postTab === 'image' && fileInput.files ? fileInput.files[0] : null;
+      const content = text;
+
+      if (!content && !imageUrl && !imageFile) return;
+
+      const btn = document.getElementById('post-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Posting…';
+
+      try {
+        const formData = new FormData();
+        formData.append('content', content);
+        if (imageUrl) formData.append('image_url', imageUrl);
+        if (imageFile) formData.append('image_file', imageFile);
+
+        const r = await fetch('/api/posts', {
+          method: 'POST',
+          body: formData
+        });
+        const d = await r.json();
+        if (!r.ok) { alert(d.error); return; }
+        document.getElementById('post-text').value = '';
+        clearImageInputs();
+        loadFeed();
+      } catch (e) { alert('Error posting.'); }
+      finally { btn.disabled = false; btn.textContent = 'Share Post'; }
+    }
+
+    async function loadFeed() {
+      if (ME.is_banned) {
+        document.getElementById('banned-banner').style.display = 'block';
+        document.getElementById('composer').style.display = 'none';
+      }
+
+      try {
+        const r = await fetch('/api/posts');
+        const d = await r.json();
+        if (!r.ok) return;
+        const list = document.getElementById('feed-list');
+        if (!d.posts.length) {
+          list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>No posts yet. Be the first to share!</div>';
+          return;
+        }
+        list.innerHTML = d.posts.map(renderPost).join('');
+      } catch (e) { }
+    }
+
+    function renderPost(p) {
+      const comments = (p.comments || []).map(c => renderComment(c, p)).join('');
+      const canComment = !ME.is_banned;
+      const canDeletePost = p.author_username === ME.username;
+      const commentInput = canComment
+        ? `<div class="comment-row">
          <input type="text" placeholder="Write a comment…" id="ci-${p.id}"
                 onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();submitComment(${p.id})}" />
          <button class="btn btn-primary btn-sm" id="cb-${p.id}" onclick="submitComment(${p.id})">Post</button>
        </div>
        <div class="analyzing" id="ai-${p.id}">🔍 Analyzing for toxicity…</div>`
-    : `<div style="font-size:13px;color:var(--red);margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)">🚫 Your account is banned from commenting.</div>`;
+        : `<div style="font-size:13px;color:var(--red);margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)">🚫 Your account is banned from commenting.</div>`;
 
-  return `<div class="card" id="post-${p.id}">
+      return `<div class="card" id="post-${p.id}" data-post-author="${esc(p.author_username)}">
     <div class="post-header">
       ${avatarHTML(p.author_display, p.author_username)}
-      <div>
-        <div class="post-author">${esc(p.author_display)}</div>
+      <div class="post-head-main">
+        <div class="post-head-row">
+          <div class="post-author">${esc(p.author_display)}</div>
+          ${canDeletePost ? `<button class="post-del" onclick="deletePost(${p.id})">Delete Post</button>` : ''}
+        </div>
         <div class="post-time">${timeAgo(p.created_at)}</div>
       </div>
     </div>
     ${p.image_url ? `<img class="post-image" src="${esc(p.image_url)}" alt="post" onerror="this.style.display='none'">` : ''}
-    ${p.content   ? `<div class="post-body">${esc(p.content)}</div>` : ''}
+    ${p.content ? `<div class="post-body">${esc(p.content)}</div>` : ''}
     <hr class="divider">
     <div id="comments-${p.id}">${comments}</div>
     ${commentInput}
   </div>`;
-}
+    }
 
-function renderComment(c) {
-  return `<div class="comment">
+    function canDeleteComment(comment, post) {
+      return comment.author_username === ME.username || post.author_username === ME.username;
+    }
+
+    function renderComment(c, p) {
+      return `<div class="comment" id="comment-${c.id}">
     <div class="comment-av ${avColor(c.author_username)}">${esc(initials(c.author_display))}</div>
-    <div>
-      <div class="comment-author">${esc(c.author_display)}</div>
+    <div class="comment-main">
+      <div class="comment-head">
+        <div class="comment-author">${esc(c.author_display)}</div>
+        ${canDeleteComment(c, p) ? `<button class="comment-del" onclick="deleteComment(${c.id})">Delete</button>` : ''}
+      </div>
       <div class="comment-text">${esc(c.content)}</div>
       <div class="comment-time">${timeAgo(c.created_at)}</div>
     </div>
   </div>`;
-}
-
-// ─── Submit comment (with AI toxicity check) ──
-async function submitComment(postId) {
-  if (ME.is_banned) return;
-  const input = document.getElementById('ci-'+postId);
-  const text  = input.value.trim();
-  if (!text) return;
-
-  const btn       = document.getElementById('cb-'+postId);
-  const indicator = document.getElementById('ai-'+postId);
-  input.disabled  = true;
-  btn.disabled    = true;
-  btn.innerHTML   = '<span class="spinner"></span>';
-  indicator.style.display = 'block';
-
-  try {
-    const r = await fetch(`/api/posts/${postId}/comments`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ content: text })
-    });
-    const d = await r.json();
-    indicator.style.display = 'none';
-
-    if (d.toxic) {
-      // Update local state
-      ME.unread_notifications = (ME.unread_notifications||0) + 1;
-      if (d.just_banned) { ME.is_banned = true; ME.unread_notifications++; }
-      ME.toxic_count = d.violation_count;
-      updateBadge();
-
-      // Show inline warning
-      showToxicWarning(postId, d);
-
-      input.value = '';
-      if (d.banned) {
-        document.getElementById('banned-banner').style.display = 'block';
-        document.getElementById('composer').style.display = 'none';
-        // Disable all comment inputs
-        document.querySelectorAll('[id^="ci-"]').forEach(el => el.disabled = true);
-        document.querySelectorAll('[id^="cb-"]').forEach(el => el.disabled = true);
-      }
-    } else {
-      // Add new comment to DOM
-      const commentsDiv = document.getElementById('comments-'+postId);
-      commentsDiv.insertAdjacentHTML('beforeend', renderComment(d.comment));
-      input.value = '';
     }
-  } catch(e) {
-    indicator.style.display = 'none';
-    alert('Error posting comment. Please try again.');
-  } finally {
-    input.disabled = false;
-    btn.disabled   = false;
-    btn.textContent = 'Post';
-  }
-}
 
-function showToxicWarning(postId, data) {
-  // Remove any existing warning on this post
-  document.querySelectorAll(`#post-${postId} .toxic-warning`).forEach(el => el.remove());
+    async function deleteComment(commentId) {
+      const ok = confirm('Delete this comment?');
+      if (!ok) return;
 
-  const remaining = Math.max(0, 10 - data.violation_count);
-  const banMsg    = data.just_banned ? '<br><strong>🚫 Your account has been permanently banned.</strong>' : `<br>${remaining} violation(s) remaining before permanent ban.`;
+      try {
+        const r = await fetch(`/api/comments/${commentId}`, { method: 'DELETE' });
+        const d = await r.json();
+        if (!r.ok) {
+          alert(d.error || 'Could not delete comment.');
+          return;
+        }
 
-  const div = document.createElement('div');
-  div.className = 'toxic-warning';
-  div.innerHTML = `⚠️ <strong>Your comment was removed.</strong> Toxicity score: ${Math.round(data.score*100)}%.<br>${esc(data.reason||'')}${banMsg}`;
+        const commentEl = document.getElementById(`comment-${commentId}`);
+        if (commentEl) {
+          commentEl.remove();
+          return;
+        }
 
-  const postEl = document.getElementById('post-'+postId);
-  postEl.appendChild(div);
+        // Fallback to full feed refresh if the comment node is not found.
+        loadFeed();
+      } catch (e) {
+        alert('Error deleting comment. Please try again.');
+      }
+    }
 
-  // Auto-remove after 10 s
-  setTimeout(() => div.remove(), 10000);
-}
+    async function submitComment(postId) {
+      if (ME.is_banned) return;
+      const input = document.getElementById('ci-' + postId);
+      const text = input.value.trim();
+      if (!text) return;
 
-// ─── Notifications ────────────────────────────
-async function loadNotifications() {
-  const r = await fetch('/api/notifications');
-  const d = await r.json();
-  const list = document.getElementById('notif-list');
-  if (!d.notifications.length) {
-    list.innerHTML = '<div class="empty">No notifications yet.</div>';
-    return;
-  }
-  list.innerHTML = d.notifications.map(n => {
-    const icon = n.type==='banned' ? '🚫' : n.type==='toxic_own' ? '⚠️' : '📢';
-    const bg   = n.type==='banned'||n.type==='toxic_own' ? 'background:var(--red-lt)' : 'background:var(--amber-lt)';
-    return `<div class="notif ${n.is_read?'':'unread'}">
+      const btn = document.getElementById('cb-' + postId);
+      const indicator = document.getElementById('ai-' + postId);
+      input.disabled = true;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+      indicator.style.display = 'block';
+
+      try {
+        const r = await fetch(`/api/posts/${postId}/comments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: text })
+        });
+        const d = await r.json();
+        indicator.style.display = 'none';
+
+        if (d.toxic) {
+          // Update local state
+          ME.unread_notifications = (ME.unread_notifications || 0) + 1;
+          if (d.just_banned) { ME.is_banned = true; ME.unread_notifications++; }
+          ME.toxic_count = d.violation_count;
+          updateBadge();
+
+          // Show inline warning
+          showToxicWarning(postId, d);
+
+          input.value = '';
+          if (d.banned) {
+            document.getElementById('banned-banner').style.display = 'block';
+            document.getElementById('composer').style.display = 'none';
+            document.querySelectorAll('[id^="ci-"]').forEach(el => el.disabled = true);
+            document.querySelectorAll('[id^="cb-"]').forEach(el => el.disabled = true);
+          }
+        } else {
+          const commentsDiv = document.getElementById('comments-' + postId);
+          const postEl = document.getElementById('post-' + postId);
+          const post = { id: postId, author_username: postEl?.dataset.postAuthor || '' };
+          commentsDiv.insertAdjacentHTML('beforeend', renderComment(d.comment, post));
+          input.value = '';
+        }
+      } catch (e) {
+        indicator.style.display = 'none';
+        alert('Error posting comment. Please try again.');
+      } finally {
+        input.disabled = false;
+        btn.disabled = false;
+        btn.textContent = 'Post';
+      }
+    }
+
+    async function deletePost(postId) {
+      const ok = confirm('Delete this post? This will also delete all its comments.');
+      if (!ok) return;
+
+      try {
+        const r = await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
+        const d = await r.json();
+        if (!r.ok) {
+          alert(d.error || 'Could not delete post.');
+          return;
+        }
+
+        const postEl = document.getElementById(`post-${postId}`);
+        if (postEl) {
+          postEl.remove();
+        }
+
+        const feedList = document.getElementById('feed-list');
+        if (feedList && !feedList.children.length) {
+          feedList.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>No posts yet. Be the first to share!</div>';
+        }
+      } catch (e) {
+        alert('Error deleting post. Please try again.');
+      }
+    }
+
+    async function deleteAccount() {
+      // deprecated - replaced by modal
+    }
+
+    function showDeleteModal() {
+      document.getElementById('delete-password').value = '';
+      document.getElementById('delete-error').style.display = 'none';
+      document.getElementById('delete-account-modal').style.display = 'flex';
+      document.getElementById('delete-password').focus();
+    }
+
+    function hideDeleteModal() {
+      document.getElementById('delete-account-modal').style.display = 'none';
+      document.getElementById('delete-error').style.display = 'none';
+    }
+
+    async function deleteAccountConfirmed() {
+      const pw = document.getElementById('delete-password').value || '';
+      const btn = document.getElementById('delete-confirm-btn');
+      if (!pw) {
+        const err = document.getElementById('delete-error'); err.textContent = 'Please enter your password.'; err.style.display = 'block'; return;
+      }
+      btn.disabled = true; btn.textContent = 'Deleting…';
+      try {
+        const r = await fetch('/api/delete_account', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirm_password: pw }) });
+        const d = await r.json();
+        if (!r.ok) {
+          const err = document.getElementById('delete-error'); err.textContent = d.error || 'Could not delete account.'; err.style.display = 'block';
+          btn.disabled = false; btn.textContent = 'Delete Account';
+          return;
+        }
+        window.location.href = '/';
+      } catch (e) {
+        const err = document.getElementById('delete-error'); err.textContent = 'Error deleting account. Please try again.'; err.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'Delete Account';
+      }
+    }
+
+    function showToxicWarning(postId, data) {
+      // Remove any existing warning on this post
+      document.querySelectorAll(`#post-${postId} .toxic-warning`).forEach(el => el.remove());
+
+      const remaining = Math.max(0, 10 - data.violation_count);
+      const banMsg = data.just_banned ? '<br><strong>🚫 Your account has been permanently banned.</strong>' : `<br>${remaining} violation(s) remaining before permanent ban.`;
+
+      const div = document.createElement('div');
+      div.className = 'toxic-warning';
+      div.innerHTML = `⚠️ <strong>Your comment was removed.</strong> Toxicity score: ${Math.round(data.score * 100)}%.<br>${esc(data.reason || '')}${banMsg}`;
+
+      const postEl = document.getElementById('post-' + postId);
+      postEl.appendChild(div);
+
+      setTimeout(() => div.remove(), 10000);
+    }
+
+    async function loadNotifications() {
+      const r = await fetch('/api/notifications');
+      const d = await r.json();
+      const list = document.getElementById('notif-list');
+      if (!d.notifications.length) {
+        list.innerHTML = '<div class="empty">No notifications yet.</div>';
+        return;
+      }
+      list.innerHTML = d.notifications.map(n => {
+        const icon = n.type === 'banned' ? '🚫' : n.type === 'toxic_own' ? '⚠️' : '📢';
+        const bg = n.type === 'banned' || n.type === 'toxic_own' ? 'background:var(--red-lt)' : 'background:var(--amber-lt)';
+        return `<div class="notif ${n.is_read ? '' : 'unread'}">
       <div class="notif-icon" style="${bg}">${icon}</div>
       <div class="notif-body">
         ${esc(n.message)}
         <div class="notif-time">${timeAgo(n.created_at)}</div>
       </div>
     </div>`;
-  }).join('');
-}
+      }).join('');
+    }
 
-async function markRead() {
-  await fetch('/api/notifications/read', { method: 'POST' });
-  ME.unread_notifications = 0;
-  updateBadge();
-}
+    async function markRead() {
+      await fetch('/api/notifications/read', { method: 'POST' });
+      ME.unread_notifications = 0;
+      updateBadge();
+    }
 
-async function clearNotifications() {
-  await fetch('/api/notifications', { method: 'DELETE' });
-  ME.unread_notifications = 0;
-  updateBadge();
-  loadNotifications();
-}
+    async function clearNotifications() {
+      await fetch('/api/notifications', { method: 'DELETE' });
+      ME.unread_notifications = 0;
+      updateBadge();
+      loadNotifications();
+    }
 
-// ─── Profile ──────────────────────────────────
-async function renderProfile() {
-  // Refresh user data
-  const r = await fetch('/api/me');
-  const d = await r.json();
-  ME = { ...ME, ...d.user };
+    async function renderProfile() {
+      // Refresh user data
+      const r = await fetch('/api/me');
+      const d = await r.json();
+      ME = { ...ME, ...d.user };
 
-  // Count posts/comments from feed (approximation; could add a dedicated endpoint)
-  const fr = await fetch('/api/posts');
-  const fd = await r.ok && fr.ok ? await fr.json() : { posts: [] };
-  const postCount    = (fd.posts||[]).filter(p => p.author_username === ME.username).length;
-  const commentCount = (fd.posts||[]).reduce((acc,p) => acc + (p.comments||[]).filter(c=>c.author_username===ME.username).length, 0);
+      // Count posts/comments from feed (approximation; could add a dedicated endpoint)
+      const fr = await fetch('/api/posts');
+      const fd = await r.ok && fr.ok ? await fr.json() : { posts: [] };
+      const postCount = (fd.posts || []).filter(p => p.author_username === ME.username).length;
+      const commentCount = (fd.posts || []).reduce((acc, p) => acc + (p.comments || []).filter(c => c.author_username === ME.username).length, 0);
 
-  const pct     = Math.min(100, (ME.toxic_count||0) * 10);
-  const barColor= ME.toxic_count >= 8 ? 'var(--red)' : ME.toxic_count >= 5 ? '#EF9F27' : 'var(--green)';
-  const remaining = Math.max(0, 10 - (ME.toxic_count||0));
+      const pct = Math.min(100, (ME.toxic_count || 0) * 10);
+      const barColor = ME.toxic_count >= 8 ? 'var(--red)' : ME.toxic_count >= 5 ? '#EF9F27' : 'var(--green)';
+      const remaining = Math.max(0, 10 - (ME.toxic_count || 0));
 
-  document.getElementById('profile-content').innerHTML = `
+      document.getElementById('profile-content').innerHTML = `
     <div class="card">
       <div class="profile-header">
         <div class="profile-av ${avColor(ME.username)}">${esc(initials(ME.display_name))}</div>
         <div>
           <div class="profile-name">${esc(ME.display_name)}</div>
           <div class="profile-user">@${esc(ME.username)}</div>
-          <div class="tag ${ME.is_banned ? 'tag-red' : 'tag-green'}">${ME.is_banned ? '🚫 Banned' : '✓ Active'}</div>
+          <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+            <div class="tag ${ME.is_banned ? 'tag-red' : 'tag-green'}">${ME.is_banned ? '🚫 Banned' : '✓ Active'}</div>
+            <button class="btn btn-danger btn-sm" onclick="showDeleteModal()">Delete Account</button>
+          </div>
         </div>
       </div>
       <div class="stats-grid">
         <div class="stat-box"><div class="stat-val">${postCount}</div><div class="stat-label">Posts</div></div>
         <div class="stat-box"><div class="stat-val">${commentCount}</div><div class="stat-label">Comments</div></div>
         <div class="stat-box">
-          <div class="stat-val" style="color:${barColor}">${ME.toxic_count||0}</div>
+          <div class="stat-val" style="color:${barColor}">${ME.toxic_count || 0}</div>
           <div class="stat-label">Violations</div>
         </div>
       </div>
       ${!ME.is_banned ? `<div class="viol-bar-wrap">
-        <div style="font-size:13px;color:var(--muted)">Violation limit: ${ME.toxic_count||0} / 10</div>
+        <div style="font-size:13px;color:var(--muted)">Violation limit: ${ME.toxic_count || 0} / 10</div>
         <div class="viol-bar"><div class="viol-fill" style="width:${pct}%;background:${barColor}"></div></div>
         <div style="font-size:12px;color:var(--muted)">${remaining} remaining before ban</div>
       </div>` : ''}
@@ -525,7 +1312,27 @@ async function renderProfile() {
       <div class="guideline"><div class="guideline-icon" style="background:var(--red-lt)">✗</div>No hate speech, insults, threats, or harassment</div>
       <div class="guideline"><div class="guideline-icon" style="background:var(--red-lt)">✗</div>10 toxic comment violations = permanent account ban</div>
     </div>`;
-}
-</script>
+    }
+  </script>
+  <!-- Delete account confirmation modal -->
+  <div id="delete-account-modal" style="display:none">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card">
+      <h3>Confirm Account Deletion</h3>
+      <p class="muted">This action is irreversible. All your posts, comments, and notifications will be permanently
+        removed.</p>
+      <div style="margin-top:12px">
+        <label style="font-weight:600;font-size:13px">Enter your password to confirm</label>
+        <input type="password" id="delete-password" placeholder="Password" style="margin-top:8px" />
+        <div id="delete-error" style="color:#A32D2D;font-size:13px;margin-top:8px;display:none"></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button class="btn btn-outline btn-sm" onclick="hideDeleteModal()">Cancel</button>
+        <button class="btn btn-danger btn-sm" id="delete-confirm-btn" onclick="deleteAccountConfirmed()">Delete
+          Account</button>
+      </div>
+    </div>
+  </div>
 </body>
+
 </html>

@@ -2,11 +2,8 @@ import os
 import pickle
 import re
 import numpy as np
-# Try to import TensorFlow/Keras; allow module to be imported even if TF is missing
 import importlib
 
-# Dynamically import TensorFlow/Keras to allow this module to import
-# even when TensorFlow isn't installed (prevents hard ImportError at import-time)
 try:
     tf = importlib.import_module('tensorflow')
     keras_models = importlib.import_module('tensorflow.keras.models')
@@ -14,7 +11,6 @@ try:
     seq_module = importlib.import_module('tensorflow.keras.preprocessing.sequence')
     pad_sequences = getattr(seq_module, 'pad_sequences')
 
-    # Suppress TensorFlow warnings if possible
     try:
         tf.get_logger().setLevel('ERROR')
     except Exception:
@@ -29,9 +25,8 @@ class ToxicityDetector:
                  tokenizer_path='./saved_models/tokenizer.pkl',
                  threshold=0.552):
         self.threshold = threshold
-        self.max_sequence_length = 150  # From your Config class
+        self.max_sequence_length = 150 
         
-        # Load model with custom objects (focal loss)
         custom_objects = {
             'focal_loss_fixed': self._focal_loss,
             'focal_loss': self._focal_loss
@@ -55,14 +50,12 @@ class ToxicityDetector:
             self.tokenizer = None
     
     def _focal_loss(self, y_true, y_pred, gamma=2.0, alpha=0.75):
-        """Focal loss function (same as used in training)"""
         pt = tf.where(tf.equal(y_true, 1), y_pred, 1 - y_pred)
         alpha_t = tf.where(tf.equal(y_true, 1), alpha, 1 - alpha)
         loss = -alpha_t * tf.pow(1 - pt, gamma) * tf.math.log(pt + 1e-8)
         return tf.reduce_mean(loss)
     
     def _clean_text(self, text):
-        """Clean text the same way as in training"""
         if not text:
             return ""
         
@@ -87,20 +80,6 @@ class ToxicityDetector:
         return text
     
     def predict(self, text):
-        """
-        Predict if a comment is toxic
-        
-        Args:
-            text: Comment text to analyze
-        
-        Returns:
-            dict: {
-                'toxic': bool,
-                'score': float (0-1 probability),
-                'confidence': float,
-                'reason': str
-            }
-        """
         if self.model is None or self.tokenizer is None:
             return {
                 'toxic': False,
@@ -135,7 +114,6 @@ class ToxicityDetector:
         }
     
     def predict_batch(self, texts):
-        """Predict multiple comments at once"""
         if self.model is None or self.tokenizer is None:
             return [{'toxic': False, 'score': 0.0, 'confidence': 0.0} for _ in texts]
         
@@ -157,11 +135,9 @@ class ToxicityDetector:
         
         return results
 
-# Create a singleton instance
 _detector = None
 
 def get_detector():
-    """Get or create the toxicity detector singleton"""
     global _detector
     if _detector is None:
         # Check if model files exist

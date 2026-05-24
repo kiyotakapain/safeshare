@@ -1,15 +1,11 @@
-"""
-SafeShare — Toxic-Free Social Platform
-Flask backend with CNN toxicity detection using trained model
-"""
-import os, json, re
+import os, json, re, uuid
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
+from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 
-# Import your toxicity detector
 from toxicity_model import get_detector
 
 load_dotenv()
@@ -18,22 +14,25 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-this-in-production-please')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///safeshare.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB upload limit
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
-# Toxicity detection parameters (from your CNN model)
-TOXIC_THRESHOLD = 0.552   # from your CNN paper
-BAN_THRESHOLD = 10        # violations before account ban
+TOXIC_THRESHOLD = 0.552  
+BAN_THRESHOLD = 10   
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
-# Initialize toxicity detector (loads your CNN model)
 toxicity_detector = get_detector()
 
-# ─────────────────────────────────────────────
-# Database models
-# ─────────────────────────────────────────────
+
+def allowed_image_file(filename: str) -> bool:
+    if not filename or '.' not in filename:
+        return False
+    ext = filename.rsplit('.', 1)[1].lower()
+    return ext in ALLOWED_IMAGE_EXTENSIONS
+
 
 class User(db.Model):
     id           = db.Column(db.Integer, primary_key=True)
@@ -89,6 +88,8 @@ class Comment(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
+            'post_id': self.post_id,
+            'user_id': self.user_id,
             'author_username': self.author_user.username,
             'author_display': self.author_user.display_name,
             'content': self.content,
@@ -99,7 +100,7 @@ class Comment(db.Model):
 class Notification(db.Model):
     id         = db.Column(db.Integer, primary_key=True)
     user_id    = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    type       = db.Column(db.String(50), nullable=False)   # toxic_own | toxic_on_post | banned
+    type       = db.Column(db.String(50), nullable=False)  
     message    = db.Column(db.Text, nullable=False)
     is_read    = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -112,10 +113,7 @@ class Notification(db.Model):
         }
 
 
-# ─────────────────────────────────────────────
 # Toxicity Analysis (using your trained CNN model)
-# ─────────────────────────────────────────────
-
 def analyze_toxicity(text: str) -> dict:
     """
     Use your trained CNN model to detect toxicity
@@ -137,11 +135,6 @@ def analyze_toxicity(text: str) -> dict:
         print(f'[Toxicity detection error] {e}')
         return {'toxic': False, 'score': 0.0, 'reason': 'Analysis error'}
 
-
-# ─────────────────────────────────────────────
-# Auth helpers
-# ─────────────────────────────────────────────
-
 def current_user():
     uid = session.get('user_id')
     return User.query.get(uid) if uid else None
@@ -156,10 +149,7 @@ def login_required_json(f):
     return decorated
 
 
-# ─────────────────────────────────────────────
 # Routes — Pages
-# ─────────────────────────────────────────────
-
 @app.route('/')
 def index():
     if current_user():
@@ -173,10 +163,7 @@ def feed():
     return render_template('app.html')
 
 
-# ─────────────────────────────────────────────
 # Routes — Auth API
-# ─────────────────────────────────────────────
-
 @app.route('/api/register', methods=['POST'])
 def api_register():
     data = request.json
@@ -229,10 +216,7 @@ def api_me():
     return jsonify({'user': u.to_dict()})
 
 
-# ─────────────────────────────────────────────
 # Routes — Posts API
-# ─────────────────────────────────────────────
-
 @app.route('/api/posts', methods=['GET'])
 @login_required_json
 def api_get_posts():
@@ -248,12 +232,30 @@ def api_create_post():
     if u.is_banned:
         return jsonify({'error': 'Your account is banned.'}), 403
 
-    data = request.json
-    content   = data.get('content', '').strip()
-    image_url = data.get('image_url', '').strip()
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+        content = data.get('content', '').strip()
+        image_url = data.get('image_url', '').strip()
+        image_file = None
+    else:
+        content = request.form.get('content', '').strip()
+        image_url = request.form.get('image_url', '').strip()
+        image_file = request.files.get('image_file')
+
+    if image_file and image_file.filename:
+        if not allowed_image_file(image_file.filename):
+            return jsonify({'error': 'Invalid image type. Use png, jpg, jpeg, gif, or webp.'}), 400
+
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        safe_name = secure_filename(image_file.filename)
+        ext = os.path.splitext(safe_name)[1].lower()
+        generated_name = f'{uuid.uuid4().hex}{ext}'
+        save_path = os.path.join(app.config['UPLOAD_FOLDER'], generated_name)
+        image_file.save(save_path)
+        image_url = f'/static/uploads/{generated_name}'
 
     if not content and not image_url:
-        return jsonify({'error': 'Post must have text or an image URL.'}), 400
+        return jsonify({'error': 'Post must have text, an image URL, or an uploaded image.'}), 400
 
     post = Post(user_id=u.id, content=content, image_url=image_url)
     db.session.add(post)
@@ -261,10 +263,47 @@ def api_create_post():
     return jsonify({'post': post.to_dict(u.id)})
 
 
-# ─────────────────────────────────────────────
-# Routes — Comments API (with toxicity check using CNN)
-# ─────────────────────────────────────────────
+@app.route('/api/posts/<int:post_id>', methods=['DELETE'])
+@login_required_json
+def api_delete_post(post_id):
+    u = current_user()
+    post = Post.query.get_or_404(post_id)
 
+    if u.id != post.user_id:
+        return jsonify({'error': 'You are not allowed to delete this post.'}), 403
+
+    db.session.delete(post)
+    db.session.commit()
+    return jsonify({'ok': True, 'post_id': post_id})
+
+
+@app.route('/api/delete_account', methods=['POST'])
+@login_required_json
+def api_delete_account():
+    u = current_user()
+    # Require password confirmation to delete account
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+        confirm_password = data.get('confirm_password', '')
+    else:
+        confirm_password = request.form.get('confirm_password', '')
+
+    if not confirm_password:
+        return jsonify({'error': 'Password confirmation is required.'}), 400
+
+    if not bcrypt.check_password_hash(u.password, confirm_password):
+        return jsonify({'error': 'Password incorrect.'}), 403
+
+    # Remove the user and cascade-delete related posts/comments/notifications
+    try:
+        db.session.delete(u)
+        db.session.commit()
+    finally:
+        session.pop('user_id', None)
+    return jsonify({'ok': True})
+
+
+# Routes — Comments API (with toxicity check using CNN) 
 @app.route('/api/posts/<int:post_id>/comments', methods=['POST'])
 @login_required_json
 def api_create_comment(post_id):
@@ -280,7 +319,7 @@ def api_create_comment(post_id):
     if len(text) > 1000:
         return jsonify({'error': 'Comment too long (max 1000 characters).'}), 400
 
-    # ── Toxicity check using your CNN model ──────
+    # ── Toxicity check using CNN model ──────
     result = analyze_toxicity(text)
 
     if result['toxic']:
@@ -324,17 +363,29 @@ def api_create_comment(post_id):
             'just_banned': just_banned
         }), 200
 
-    # ── Safe comment — save it ──────────────
+    # Safe comment: save it 
     comment = Comment(post_id=post_id, user_id=u.id, content=text)
     db.session.add(comment)
     db.session.commit()
     return jsonify({'toxic': False, 'comment': comment.to_dict()})
 
 
-# ─────────────────────────────────────────────
-# Routes — Notifications API
-# ─────────────────────────────────────────────
+@app.route('/api/comments/<int:comment_id>', methods=['DELETE'])
+@login_required_json
+def api_delete_comment(comment_id):
+    u = current_user()
+    comment = Comment.query.get_or_404(comment_id)
 
+    # Allow deletion by the comment author or the post author.
+    if u.id != comment.user_id and u.id != comment.post.user_id:
+        return jsonify({'error': 'You are not allowed to delete this comment.'}), 403
+
+    db.session.delete(comment)
+    db.session.commit()
+    return jsonify({'ok': True, 'comment_id': comment_id})
+
+
+# Routes — Notifications API
 @app.route('/api/notifications', methods=['GET'])
 @login_required_json
 def api_get_notifications():
@@ -361,19 +412,13 @@ def api_clear_notifications():
     return jsonify({'ok': True})
 
 
-# ─────────────────────────────────────────────
 # Health check endpoint (for Render)
-# ─────────────────────────────────────────────
-
 @app.route('/health')
 def health_check():
     return jsonify({'status': 'healthy', 'model_loaded': toxicity_detector is not None and toxicity_detector.model is not None})
 
 
-# ─────────────────────────────────────────────
 # Bootstrap & run
-# ─────────────────────────────────────────────
-
 with app.app_context():
     db.create_all()
     # Ensure detector is loaded
