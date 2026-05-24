@@ -3,6 +3,7 @@ import pickle
 import re
 import numpy as np
 import importlib
+import joblib
 
 try:
     tf = importlib.import_module('tensorflow')
@@ -59,19 +60,15 @@ class ToxicityDetector:
                 vec_path = os.path.join(os.path.dirname(__file__), 'saved_models', 'tfidf_vectorizer.pkl')
                 clf_path = os.path.join(os.path.dirname(__file__), 'saved_models', 'logistic_regression.pkl')
                 if os.path.exists(vec_path) and os.path.exists(clf_path):
-                    with open(vec_path, 'rb') as f:
-                        self.vectorizer = pickle.load(f)
-                    with open(clf_path, 'rb') as f:
-                        self.sk_model = pickle.load(f)
+                    self.vectorizer = joblib.load(vec_path)
+                    self.sk_model = joblib.load(clf_path)
                     print(f"✓ Loaded sklearn fallback: {clf_path} + {vec_path}")
                 else:
                     # try other classifiers if logistic not present
                     alt_clf = os.path.join(os.path.dirname(__file__), 'saved_models', 'random_forest.pkl')
                     if os.path.exists(vec_path) and os.path.exists(alt_clf):
-                        with open(vec_path, 'rb') as f:
-                            self.vectorizer = pickle.load(f)
-                        with open(alt_clf, 'rb') as f:
-                            self.sk_model = pickle.load(f)
+                        self.vectorizer = joblib.load(vec_path)
+                        self.sk_model = joblib.load(alt_clf)
                         print(f"✓ Loaded sklearn fallback: {alt_clf} + {vec_path}")
             except Exception as e:
                 print(f"Error loading sklearn fallback models: {e}")
@@ -107,14 +104,6 @@ class ToxicityDetector:
         return text
     
     def predict(self, text):
-        if self.model is None or self.tokenizer is None:
-            return {
-                'toxic': False,
-                'score': 0.0,
-                'confidence': 0.0,
-                'reason': 'Model not loaded properly'
-            }
-        
         # Clean the text
         cleaned_text = self._clean_text(text)
         
@@ -144,6 +133,14 @@ class ToxicityDetector:
             except Exception as e:
                 print(f"Error during sklearn prediction fallback: {e}")
 
+        if self.model is None or self.tokenizer is None:
+            return {
+                'toxic': False,
+                'score': 0.0,
+                'confidence': 0.0,
+                'reason': 'Model not loaded properly'
+            }
+
         # Tokenize and pad for Keras model
         sequence = self.tokenizer.texts_to_sequences([cleaned_text])
         padded = pad_sequences(sequence, maxlen=self.max_sequence_length, padding='post')
@@ -163,8 +160,8 @@ class ToxicityDetector:
         }
     
     def predict_batch(self, texts):
-        # If keras model/tokenizer missing, try sklearn fallback
-        if (self.model is None or self.tokenizer is None) and self.sk_model is not None and self.vectorizer is not None:
+        # If sklearn fallback is available, prefer it when Keras artifacts are unavailable.
+        if self.sk_model is not None and self.vectorizer is not None:
             cleaned_texts = [self._clean_text(t) for t in texts]
             try:
                 feats = self.vectorizer.transform(cleaned_texts)

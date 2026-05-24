@@ -127,7 +127,10 @@ def analyze_toxicity(text: str) -> dict:
     Use your trained CNN model to detect toxicity
     Returns {'toxic': bool, 'score': float, 'reason': str}
     """
-    if toxicity_detector is None or toxicity_detector.model is None:
+    has_keras_model = toxicity_detector is not None and getattr(toxicity_detector, 'model', None) is not None
+    has_sklearn_model = toxicity_detector is not None and getattr(toxicity_detector, 'sk_model', None) is not None
+
+    if toxicity_detector is None or (not has_keras_model and not has_sklearn_model):
         # Fallback if model not loaded
         print("[Warning] Toxicity detector not available")
         return {'toxic': False, 'score': 0.0, 'reason': 'Model not loaded'}
@@ -423,14 +426,17 @@ def api_clear_notifications():
 # Health check endpoint (for Render)
 @app.route('/health')
 def health_check():
-    return jsonify({'status': 'healthy', 'model_loaded': toxicity_detector is not None and toxicity_detector.model is not None})
+    model_loaded = False
+    if toxicity_detector is not None:
+        model_loaded = getattr(toxicity_detector, 'model', None) is not None or getattr(toxicity_detector, 'sk_model', None) is not None
+    return jsonify({'status': 'healthy', 'model_loaded': model_loaded})
 
 
 # Bootstrap & run
 with app.app_context():
     db.create_all()
     # Ensure detector is loaded
-    if toxicity_detector and toxicity_detector.model:
+    if toxicity_detector and (toxicity_detector.model or getattr(toxicity_detector, 'sk_model', None)):
         print("✓ Toxicity detector ready with CNN model")
         print(f"  - Threshold: {TOXIC_THRESHOLD}")
         print(f"  - Ban threshold: {BAN_THRESHOLD} violations")
