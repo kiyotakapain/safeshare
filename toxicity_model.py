@@ -40,6 +40,10 @@ class ToxicityDetector:
             print("Make sure the model file exists in 'saved_models/' directory")
             self.model = None
         
+        # scikit-learn fallback (vectorizer + classifier)
+        self.sk_model = None
+        self.vectorizer = None
+        
         # Load tokenizer
         try:
             with open(tokenizer_path, 'rb') as f:
@@ -48,6 +52,29 @@ class ToxicityDetector:
         except Exception as e:
             print(f"Error loading tokenizer: {e}")
             self.tokenizer = None
+
+        # If Keras model/tokenizer failed, try sklearn pipeline fallback
+        if self.model is None or self.tokenizer is None:
+            try:
+                vec_path = os.path.join(os.path.dirname(__file__), 'saved_models', 'tfidf_vectorizer.pkl')
+                clf_path = os.path.join(os.path.dirname(__file__), 'saved_models', 'logistic_regression.pkl')
+                if os.path.exists(vec_path) and os.path.exists(clf_path):
+                    with open(vec_path, 'rb') as f:
+                        self.vectorizer = pickle.load(f)
+                    with open(clf_path, 'rb') as f:
+                        self.sk_model = pickle.load(f)
+                    print(f"✓ Loaded sklearn fallback: {clf_path} + {vec_path}")
+                else:
+                    # try other classifiers if logistic not present
+                    alt_clf = os.path.join(os.path.dirname(__file__), 'saved_models', 'random_forest.pkl')
+                    if os.path.exists(vec_path) and os.path.exists(alt_clf):
+                        with open(vec_path, 'rb') as f:
+                            self.vectorizer = pickle.load(f)
+                        with open(alt_clf, 'rb') as f:
+                            self.sk_model = pickle.load(f)
+                        print(f"✓ Loaded sklearn fallback: {alt_clf} + {vec_path}")
+            except Exception as e:
+                print(f"Error loading sklearn fallback models: {e}")
     
     def _focal_loss(self, y_true, y_pred, gamma=2.0, alpha=0.75):
         pt = tf.where(tf.equal(y_true, 1), y_pred, 1 - y_pred)
@@ -95,7 +122,29 @@ class ToxicityDetector:
             # If cleaning removes everything, try simple lowercase
             cleaned_text = text.lower().strip()
         
-        # Tokenize and pad
+        # If sklearn fallback is available, use it
+        if self.sk_model is not None and self.vectorizer is not None:
+            try:
+                feats = self.vectorizer.transform([cleaned_text])
+                if hasattr(self.sk_model, 'predict_proba'):
+                    proba = self.sk_model.predict_proba(feats)[0]
+                    # assume positive class is index 1
+                    score = float(proba[1]) if len(proba) > 1 else float(proba[0])
+                else:
+                    pred = int(self.sk_model.predict(feats)[0])
+                    score = 1.0 if pred == 1 else 0.0
+                is_toxic = score > self.threshold
+                confidence = score if is_toxic else 1 - score
+                return {
+                    'toxic': is_toxic,
+                    'score': score,
+                    'confidence': confidence,
+                    'reason': 'sklearn classifier fallback'
+                }
+            except Exception as e:
+                print(f"Error during sklearn prediction fallback: {e}")
+
+        # Tokenize and pad for Keras model
         sequence = self.tokenizer.texts_to_sequences([cleaned_text])
         padded = pad_sequences(sequence, maxlen=self.max_sequence_length, padding='post')
         
@@ -114,6 +163,30 @@ class ToxicityDetector:
         }
     
     def predict_batch(self, texts):
+        # If keras model/tokenizer missing, try sklearn fallback
+        if (self.model is None or self.tokenizer is None) and self.sk_model is not None and self.vectorizer is not None:
+            cleaned_texts = [self._clean_text(t) for t in texts]
+            try:
+                feats = self.vectorizer.transform(cleaned_texts)
+                if hasattr(self.sk_model, 'predict_proba'):
+                    probas = self.sk_model.predict_proba(feats)
+                    scores = [float(p[1]) if len(p) > 1 else float(p[0]) for p in probas]
+                else:
+                    preds = self.sk_model.predict(feats)
+                    scores = [1.0 if int(p) == 1 else 0.0 for p in preds]
+                results = []
+                for score in scores:
+                    is_toxic = score > self.threshold
+                    results.append({
+                        'toxic': is_toxic,
+                        'score': float(score),
+                        'confidence': float(score if is_toxic else 1 - score),
+                        'reason': 'sklearn classifier fallback'
+                    })
+                return results
+            except Exception as e:
+                print(f"Error during sklearn batch prediction fallback: {e}")
+
         if self.model is None or self.tokenizer is None:
             return [{'toxic': False, 'score': 0.0, 'confidence': 0.0} for _ in texts]
         
