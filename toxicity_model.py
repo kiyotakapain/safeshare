@@ -5,6 +5,22 @@ import numpy as np
 import importlib
 import joblib
 
+HEURISTIC_TOXIC_PATTERNS = {
+    r'\bstupid\b': 0.75,
+    r'\bidiot\b': 0.8,
+    r'\bmoron\b': 0.8,
+    r'\bdumb\b': 0.7,
+    r'\btrash\b': 0.6,
+    r'\bworthless\b': 0.9,
+    r'\bgarbage\b': 0.7,
+    r'\bfuck\b': 0.95,
+    r'\bshit\b': 0.85,
+    r'\basshole\b': 0.95,
+    r'kill yourself': 1.0,
+    r'shut up': 0.55,
+    r'go to hell': 0.85,
+}
+
 try:
     tf = importlib.import_module('tensorflow')
     keras_models = importlib.import_module('tensorflow.keras.models')
@@ -102,6 +118,28 @@ class ToxicityDetector:
         text = ' '.join(text.split())
         
         return text
+
+    def _heuristic_predict(self, text):
+        lowered = (text or '').lower()
+        matched = []
+        score = 0.0
+
+        for pattern, weight in HEURISTIC_TOXIC_PATTERNS.items():
+            if re.search(pattern, lowered):
+                matched.append(pattern)
+                score = max(score, weight)
+
+        is_toxic = score >= self.threshold
+        if matched and not is_toxic:
+            score = max(score, 0.6)
+            is_toxic = score >= self.threshold
+
+        return {
+            'toxic': is_toxic,
+            'score': float(score),
+            'confidence': float(score if is_toxic else 1 - score),
+            'reason': 'heuristic toxicity fallback' if matched else 'heuristic safe fallback'
+        }
     
     def predict(self, text):
         # Clean the text
@@ -133,13 +171,13 @@ class ToxicityDetector:
             except Exception as e:
                 print(f"Error during sklearn prediction fallback: {e}")
 
+        # Final fallback: rule-based moderation so obvious abuse still gets blocked
+        heuristic = self._heuristic_predict(cleaned_text)
+        if heuristic['toxic']:
+            return heuristic
+
         if self.model is None or self.tokenizer is None:
-            return {
-                'toxic': False,
-                'score': 0.0,
-                'confidence': 0.0,
-                'reason': 'Model not loaded properly'
-            }
+            return heuristic
 
         # Tokenize and pad for Keras model
         sequence = self.tokenizer.texts_to_sequences([cleaned_text])
@@ -185,7 +223,7 @@ class ToxicityDetector:
                 print(f"Error during sklearn batch prediction fallback: {e}")
 
         if self.model is None or self.tokenizer is None:
-            return [{'toxic': False, 'score': 0.0, 'confidence': 0.0} for _ in texts]
+            return [self._heuristic_predict(text) for text in texts]
         
         cleaned_texts = [self._clean_text(t) for t in texts]
         sequences = self.tokenizer.texts_to_sequences(cleaned_texts)
