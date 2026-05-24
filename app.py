@@ -139,10 +139,7 @@ def analyze_toxicity(text: str) -> dict:
     Returns {'toxic': bool, 'score': float, 'reason': str}
     """
     detector = get_toxicity_detector()
-    has_keras_model = detector is not None and getattr(detector, 'model', None) is not None
-    has_sklearn_model = detector is not None and getattr(detector, 'sk_model', None) is not None
-
-    if detector is None or (not has_keras_model and not has_sklearn_model):
+    if detector is None:
         # Fallback if model not loaded
         print("[Warning] Toxicity detector not available")
         return {'toxic': False, 'score': 0.0, 'reason': 'Model not loaded'}
@@ -152,7 +149,7 @@ def analyze_toxicity(text: str) -> dict:
         return {
             'toxic': result['toxic'],
             'score': result['score'],
-            'reason': f'CNN prediction (confidence: {result["confidence"]:.2%})'
+            'reason': result.get('reason', f'Prediction (confidence: {result.get("confidence", 0.0):.2%})')
         }
     except Exception as e:
         print(f'[Toxicity detection error] {e}')
