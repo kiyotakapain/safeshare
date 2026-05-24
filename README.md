@@ -26,6 +26,7 @@ A social platform with AI-powered toxicity detection using Claude API.
 ## Environment Variables
 - `SECRET_KEY`: Flask secret key
 - `ANTHROPIC_API_KEY`: Your Claude API key
+- `DATABASE_URL`: PostgreSQL connection string in production; if unset, the app uses local SQLite
 
 ## Deployment
 Deployed on [Render/Railway/Heroku]

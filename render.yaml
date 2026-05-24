@@ -16,3 +16,13 @@ services:
         value: 3.13.1
       - key: FLASK_DEBUG
         value: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: safeshare-db
+          property: connectionString
+
+databases:
+  - name: safeshare-db
+    databaseName: safeshare
+    user: safeshare
+    plan: free
